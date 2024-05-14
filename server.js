@@ -13,7 +13,7 @@ app.use(cors({
 app.use(express.json())
 
 const db = mysql.createConnection({
-    host: 'localhost',
+    host: 'localhost:8080',
     user: 'root',
     password: '',
     database: 'crud'
