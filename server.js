@@ -73,13 +73,31 @@ app.post('/signin', async (request, response) => {
 
             const token = jwt.sign({ userId: user.id }, 'your_jwt_secret', { expiresIn: '24h' });
 
-            response.json({ token });
+            response.json({ token, user });
         })
     } catch (error) {
         console.log(error)
 
         response.status(500).json({ error: 'Server Error' })
     }
+})
+
+app.get('/user', (request, response) => {
+    const userId = request.query.id
+
+    const sql = 'SELECT * FROM user WHERE id = ?'
+
+    db.query(sql, [userId], (error, data) => {
+        if(error) {
+            return response.status(500).send(error)
+        }
+
+        if(data.length > 0) {
+            response.send({ user: data[0] })
+        } else {
+            response.status(400).send({ error: 'User not found' })
+        }
+    })
 })
 
 app.listen(8000, () => {
