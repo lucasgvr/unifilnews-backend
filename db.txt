@@ -1,0 +1,10 @@
+CREATE TABLE `user` (
+ `id` int(11) NOT NULL AUTO_INCREMENT,
+ `firstName` varchar(44) NOT NULL,
+ `lastName` varchar(44) NOT NULL,
+ `email` varchar(44) NOT NULL,
+ `password` varchar(244) NOT NULL,
+ `cpf` varchar(44) NOT NULL,
+ `phone` varchar(44) NOT NULL,
+ PRIMARY KEY (`id`)
+) ENGINE=InnoDB AUTO_INCREMENT=10 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci

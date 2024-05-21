@@ -4,6 +4,10 @@ const cors = require('cors')
 
 const mysql = require('mysql')
 
+const jwt = require('jsonwebtoken')
+
+const bcrypt = require('bcrypt');
+
 const app = express()
 
 app.use(cors({
@@ -13,63 +17,70 @@ app.use(cors({
 app.use(express.json())
 
 const db = mysql.createConnection({
-    host: 'localhost:8080',
+    host: 'localhost',
     user: 'root',
     password: '',
     database: 'crud'
 })
 
-app.get('/', (req, res) => {
+app.get('/', (request, response) => {
     const sql = 'SELECT * FROM user'
 
-    db.query(sql, (err, data) => {
-        if (err) return res.json(err)
-        return res.json(data)
+    db.query(sql, (error, data) => {
+        if (error) return response.json(err)
+        return response.json(data)
     })
 })
 
-app.post('/signup', (req, res) => {
+app.post('/signup', async (request, response) => {
     const sql = 'INSERT INTO user (`firstName`, `lastName`, `email`, `password`, `cpf`, `phone`) VALUES (?)'
+
+    const hashedPassword = await bcrypt.hash(request.body.password, 10);
+
     const values = [
-        req.body.firstName,
-        req.body.lastName,
-        req.body.email,
-        req.body.password,
-        req.body.cpf,
-        req.body.phone
+        request.body.firstName,
+        request.body.lastName,
+        request.body.email,
+        hashedPassword,
+        request.body.cpf,
+        request.body.phone
     ]
 
-    db.query(sql, [values], (err, data) => {
-        if (err) return res.json(err)
-        return res.json(data)
+    db.query(sql, [values], (error, data) => {
+        if (error) return response.json(error)
+        return response.json(data)
     })
 })
 
-// app.post('/update/:id', (req, res) => {
-//     const sql = 'UPDATE user SET name = ?, email = ? WHERE id = ?'
-//     const values = [
-//         req.body.name,
-//         req.body.email
-//     ]
+app.post('/signin', async (request, response) => {
+    const { email, password } = request.body
 
-//     const id = req.params.id
+    try {
+        db.query('SELECT * FROM user WHERE email = ?', [email], async (error, data) => {
+            if (error) throw error
 
-//     db.query(sql, [...values, id], (err, data) => {
-//         if (err) return res.json(err)
-//         return res.json(data)
-//     })
-// })
+            const user = data[0]
 
-// app.post('/student/:id', (req, res) => {
-//     const sql = 'DELETE FROM user WHERE id = ?'
+            if(!user) {
+                return response.status(401).json({ error: 'Invalid Credentials' });
+            }
 
-//     const id = req.params.id
+            const isPasswordValid = await bcrypt.compare(password, user.password);
 
-//     db.query(sql, [id], (err, data) => {
-//         if (err) return res.json(err)
-//         return res.json(data)
-//     })
-// })
+            if (!isPasswordValid) {
+                return response.status(401).json({ error: 'Invalid Credentials' });
+            }
+
+            const token = jwt.sign({ userId: user.id }, 'your_jwt_secret', { expiresIn: '24h' });
+
+            response.json({ token });
+        })
+    } catch (error) {
+        console.log(error)
+
+        response.status(500).json({ error: 'Server Error' })
+    }
+})
 
 app.listen(8000, () => {
     console.log('Server running...')
