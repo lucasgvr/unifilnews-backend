@@ -10,11 +10,9 @@ const bcrypt = require('bcrypt');
 
 const app = express()
 
-app.use(cors({
-    methods: ['GET', 'PUT', 'POST', 'DELETE', 'OPTIONS']
-}))
+app.use(cors())
 
-app.use(express.json())
+app.use(express.json());
 
 const db = mysql.createConnection({
     host: 'localhost',
@@ -27,7 +25,7 @@ app.get('/', (request, response) => {
     const sql = 'SELECT * FROM user'
 
     db.query(sql, (error, data) => {
-        if (error) return response.json(err)
+        if (error) return response.json(error)
         return response.json(data)
     })
 })
@@ -52,7 +50,7 @@ app.post('/signup', async (request, response) => {
     })
 })
 
-app.post('/signin', async (request, response) => {
+app.post('/login', async (request, response) => {
     const { email, password } = request.body
 
     try {
@@ -62,7 +60,7 @@ app.post('/signin', async (request, response) => {
             const user = data[0]
 
             if(!user) {
-                return response.status(401).json({ error: 'Invalid Credentials' });
+                return response.status(401).json({ error: 'User not found' });
             }
 
             const isPasswordValid = await bcrypt.compare(password, user.password);
@@ -73,7 +71,16 @@ app.post('/signin', async (request, response) => {
 
             const token = jwt.sign({ userId: user.id }, 'your_jwt_secret', { expiresIn: '24h' });
 
-            response.json({ token, user });
+            const updateTokenQuery = 'UPDATE user SET token = ? WHERE id = ?'
+
+            db.query(updateTokenQuery, [token, user.id], (error, data) => {
+                if(error) {
+                    console.error('Error updating token in database', error)
+                    return response.status(500).json({ error: 'Internal server error' })
+                }
+
+                response.json({ token, user });
+            })
         })
     } catch (error) {
         console.log(error)
@@ -97,6 +104,25 @@ app.get('/user', (request, response) => {
         } else {
             response.status(400).send({ error: 'User not found' })
         }
+    })
+})
+
+app.post('/user/:id', (request, response) => {
+    const userId = request.params.id;
+
+    const sql = 'DELETE FROM user WHERE id = ?'
+
+    db.query(sql, [userId], (error, results) => {
+        if (error) {
+            console.error('Error deleting user:', error)
+            return response.status(500).json({ error: 'Internal server error' })
+        }
+
+        if (results.affectedRows === 0) {
+            return response.status(404).json({ error: 'User not found' })
+        }
+
+        return response.status(200).json({ message: 'User deleted successfully' })
     })
 })
 
