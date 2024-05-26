@@ -6,13 +6,19 @@ const mysql = require('mysql')
 
 const jwt = require('jsonwebtoken')
 
-const bcrypt = require('bcrypt');
+const bcrypt = require('bcrypt')
+
+const multer = require('multer')
+
+const path = require('path')
 
 const app = express()
 
 app.use(cors())
 
 app.use(express.json());
+
+app.use(express.static('public'))
 
 const db = mysql.createConnection({
     host: 'localhost',
@@ -123,6 +129,41 @@ app.post('/user/:id', (request, response) => {
         }
 
         return response.status(200).json({ message: 'User deleted successfully' })
+    })
+})
+
+const storage = multer.diskStorage({
+    destination: (request, response, callback) => {
+        callback(null, 'public/images')
+    },
+    filename: (request, file, callback) => {
+        callback(null, file.fieldname + '_' + Date.now() + path.extname(file.originalname))
+    }
+})
+
+const upload = multer({ storage: storage })
+
+app.post('/upload', upload.single('image'), (request, response) => {
+    const userId = request.body.id
+    const image = request.file.filename
+
+    console.log(image)
+    
+    const sql = 'UPDATE user SET firstName = ?, lastName = ?, email = ?, cpf = ?, phone = ?, image = ? WHERE id = ?'
+
+    const values = [
+        request.body.firstName,
+        request.body.lastName,
+        request.body.email,
+        request.body.cpf,
+        request.body.phone,
+        image,
+        userId
+    ]
+
+    db.query(sql, values, (error, data) => {
+        if(error) return response.json({ Message: 'Error' })
+        return response.json({ Status: 'Success' })
     })
 })
 
