@@ -12,6 +12,8 @@ const multer = require('multer')
 
 const path = require('path')
 
+const fs = require('fs')
+
 const app = express()
 
 app.use(cors())
@@ -145,23 +147,80 @@ const upload = multer({ storage: storage })
 
 app.post('/upload', upload.single('image'), (request, response) => {
     const userId = request.body.id
-    const image = request.file.filename
+    const newImage = request.file ? request.file.filename : null
 
-    console.log(image)
+    const getUserImageSql = 'SELECT image FROM user WHERE id = ?'
+
+    db.query(getUserImageSql, [userId], (error, data) => {
+        if(error) return response.json({ Message: 'Error retrieving current image' })
+
+        const currentImage = data[0].image
+
+        if(newImage && currentImage) {
+            const oldImagePath = path.join(__dirname, 'public/images', currentImage)
+
+            fs.unlink(oldImagePath, (error) => {
+                if(error) console.log('Error deleting old image: ', error)
+            })
+        }
+    })
+
+    let sql
+    let values
+
+    if(newImage) {
+        sql = 'UPDATE user SET firstName = ?, lastName = ?, email = ?, cpf = ?, phone = ?, image = ? WHERE id = ?'
     
-    const sql = 'UPDATE user SET firstName = ?, lastName = ?, email = ?, cpf = ?, phone = ?, image = ? WHERE id = ?'
+        values = [
+            request.body.firstName,
+            request.body.lastName,
+            request.body.email,
+            request.body.cpf,
+            request.body.phone,
+            newImage,
+            userId
+        ]
+    } else {
+        sql = 'UPDATE user SET firstName = ?, lastName = ?, email = ?, cpf = ?, phone = ? WHERE id = ?';
 
-    const values = [
-        request.body.firstName,
-        request.body.lastName,
-        request.body.email,
-        request.body.cpf,
-        request.body.phone,
-        image,
-        userId
-    ]
+        values = [
+            request.body.firstName,
+            request.body.lastName,
+            request.body.email,
+            request.body.cpf,
+            request.body.phone,
+            userId
+        ]
+    }
 
     db.query(sql, values, (error, data) => {
+        if(error) return response.json({ Message: 'Error' })
+        return response.json({ Status: 'Success' })
+    })
+})
+
+app.post('/user/:id/delete/image', (request, response) => {
+    const userId = request.params.id;
+
+    const sql = 'UPDATE user SET image = NULL WHERE id = ?' 
+
+    const getUserImageSql = 'SELECT image FROM user WHERE id = ?'
+
+    db.query(getUserImageSql, [userId], (error, data) => {
+        if(error) return response.json({ Message: 'Error retrieving current image' })
+
+        const currentImage = data[0].image
+
+        if(currentImage) {
+            const oldImagePath = path.join(__dirname, 'public/images', currentImage)
+
+            fs.unlink(oldImagePath, (error) => {
+                if(error) console.log('Error deleting old image: ', error)
+            })
+        }
+    })
+
+    db.query(sql, [userId], (error, data) => {
         if(error) return response.json({ Message: 'Error' })
         return response.json({ Status: 'Success' })
     })
