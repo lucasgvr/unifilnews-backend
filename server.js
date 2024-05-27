@@ -77,7 +77,7 @@ app.post('/login', async (request, response) => {
                 return response.status(401).json({ error: 'Invalid Credentials' });
             }
 
-            const token = jwt.sign({ userId: user.id }, 'your_jwt_secret', { expiresIn: '24h' });
+            const token = jwt.sign({ userId: user.id }, 'your_jwt_secret', { expiresIn: 10 });
 
             const updateTokenQuery = 'UPDATE user SET token = ? WHERE id = ?'
 
@@ -224,6 +224,21 @@ app.post('/user/:id/delete/image', (request, response) => {
         if(error) return response.json({ Message: 'Error' })
         return response.json({ Status: 'Success' })
     })
+})
+
+app.post('/token', (request, response) => {
+    const { token, id } = request.body
+
+    if(token && id) {
+      const decodedJwt = JSON.parse(atob(token.split(".")[1]));
+      if(decodedJwt.exp * 1000 < Date.now()) {
+        return response.json(true)
+      } else {
+        return response.json(false)
+      }
+    } else {
+        return response.json(true)
+    }
 })
 
 app.listen(8000, () => {
