@@ -77,7 +77,7 @@ app.post('/login', async (request, response) => {
                 return response.status(401).json({ error: 'Invalid Credentials' });
             }
 
-            const token = jwt.sign({ userId: user.id }, 'your_jwt_secret', { expiresIn: 10 });
+            const token = jwt.sign({ userId: user.id }, 'your_jwt_secret', { expiresIn: 100 });
 
             const updateTokenQuery = 'UPDATE user SET token = ? WHERE id = ?'
 
@@ -87,7 +87,7 @@ app.post('/login', async (request, response) => {
                     return response.status(500).json({ error: 'Internal server error' })
                 }
 
-                response.json({ token, user });
+                response.json({ token, user, Status: 'Signed' });
             })
         })
     } catch (error) {
@@ -145,7 +145,7 @@ const storage = multer.diskStorage({
 
 const upload = multer({ storage: storage })
 
-app.post('/upload', upload.single('image'), (request, response) => {
+app.post('/upload', upload.single('image'), async (request, response) => {
     const userId = request.body.id
     const newImage = request.file ? request.file.filename : null
 
@@ -168,25 +168,29 @@ app.post('/upload', upload.single('image'), (request, response) => {
     let sql
     let values
 
+    const hashedPassword = await bcrypt.hash(request.body.password, 10);
+
     if(newImage) {
-        sql = 'UPDATE user SET firstName = ?, lastName = ?, email = ?, cpf = ?, phone = ?, image = ? WHERE id = ?'
+        sql = 'UPDATE user SET firstName = ?, lastName = ?, email = ?, password = ?, cpf = ?, phone = ?, image = ? WHERE id = ?'
     
         values = [
             request.body.firstName,
             request.body.lastName,
             request.body.email,
+            hashedPassword,
             request.body.cpf,
             request.body.phone,
             newImage,
             userId
         ]
     } else {
-        sql = 'UPDATE user SET firstName = ?, lastName = ?, email = ?, cpf = ?, phone = ? WHERE id = ?';
+        sql = 'UPDATE user SET firstName = ?, lastName = ?, email = ?, password = ?, cpf = ?, phone = ? WHERE id = ?';
 
         values = [
             request.body.firstName,
             request.body.lastName,
             request.body.email,
+            hashedPassword,
             request.body.cpf,
             request.body.phone,
             userId
