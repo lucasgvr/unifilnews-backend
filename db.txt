@@ -7,5 +7,6 @@ CREATE TABLE `user` (
  `cpf` varchar(44) NOT NULL,
  `phone` varchar(44) NOT NULL,
  `token` varchar(244),
+ `image` varchar(44),
  PRIMARY KEY (`id`)
 ) ENGINE=InnoDB AUTO_INCREMENT=10 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci

@@ -230,14 +230,15 @@ app.post('/token', (request, response) => {
     const { token, id } = request.body
 
     if(token && id) {
-      const decodedJwt = JSON.parse(atob(token.split(".")[1]));
-      if(decodedJwt.exp * 1000 < Date.now()) {
-        return response.json(true)
-      } else {
-        return response.json(false)
-      }
+        const decodedJwt = JSON.parse(atob(token.split(".")[1]));
+        
+        if(decodedJwt.exp * 1000 < Date.now()) {
+            return response.json(false)
+        } else {
+            return response.json(true)
+        }
     } else {
-        return response.json(true)
+        return response.json(false)
     }
 })
 
