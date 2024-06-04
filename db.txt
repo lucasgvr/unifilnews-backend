@@ -10,3 +10,10 @@ CREATE TABLE `user` (
  `image` varchar(44),
  PRIMARY KEY (`id`)
 ) ENGINE=InnoDB AUTO_INCREMENT=10 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci
+
+CREATE TABLE `posts` (
+ `id` int(11) NOT NULL AUTO_INCREMENT,
+ `userId` int(11) NOT NULL,
+ `postContent` varchar(1000) NOT NULL,
+ PRIMARY KEY (`id`)
+) ENGINE=InnoDB AUTO_INCREMENT=15 DEFAULT CHARSET=utf8mb4

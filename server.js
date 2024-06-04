@@ -246,6 +246,21 @@ app.post('/token', (request, response) => {
     }
 })
 
+app.post('/posts/new', (request, response) => {
+    const sql = 'INSERT INTO posts (`userId`, `postContent`) VALUES (?)'
+
+    const values = [
+        request.body.id,
+        request.body.postContent
+    ]
+
+    db.query(sql, [values], (error, data) => {
+        if (error) return response.json(error)
+        return response.json(data)
+    })
+})
+
+
 app.listen(8000, () => {
     console.log('Server running...')
 })
