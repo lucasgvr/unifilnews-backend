@@ -246,12 +246,30 @@ app.post('/token', (request, response) => {
     }
 })
 
+app.get('/posts', (request, response) => {
+    const sql = 'SELECT * FROM posts'
+
+    db.query(sql, (error, data) => {
+        if(error) {
+            return response.status(500).send(error)
+        }
+
+        if(data.length > 0) {
+            response.send({ posts: data })
+        } else {
+            response.status(400).send({ error: 'User not found' })
+        }
+    })
+})
+
+
 app.post('/posts/new', (request, response) => {
-    const sql = 'INSERT INTO posts (`userId`, `postContent`) VALUES (?)'
+    const sql = 'INSERT INTO posts (`userId`, `postContent`, `createdAt`) VALUES (?)'
 
     const values = [
         request.body.id,
-        request.body.postContent
+        request.body.postContent,
+        request.body.createdAt
     ]
 
     db.query(sql, [values], (error, data) => {
