@@ -282,3 +282,57 @@ app.post('/posts/new', (request, response) => {
 app.listen(8000, () => {
     console.log('Server running...')
 })
+
+app.post('/posts/:id/like/new', (request, response) => {
+    const postId = request.params.id;
+    const userId = request.body.userId;
+
+    const sql = 'INSERT INTO post_likes (`post_id`, `user_id`) VALUES (?)'
+    const checkLikeSql = 'SELECT * FROM post_likes where post_id = ? AND user_id = ?';
+    const deleteLikeSql = 'DELETE FROM post_likes WHERE post_id = ? AND user_id = ?';
+
+    const values = [
+        postId,
+        userId
+    ]
+
+    db.query(checkLikeSql, [postId, userId], (error, data) => {
+        if (error) return response.status(500).json({ error });
+
+        if(data.length > 0) {
+            db.query(deleteLikeSql, [postId, userId], (error, result) => {
+                if (error) return response.status(500).json({ error });
+                return response.json({ message: 'Like removed' });
+            })
+        } else {
+            db.query(sql, [values], (error, data) => {
+                if (error) return response.json(error)
+                return response.json(data)
+            })
+        }
+    })
+})
+
+
+app.get('/posts/:id/likes', (request, response) => {
+    const postId = request.params.id;
+
+    const sql = 'SELECT COUNT(*) FROM post_likes WHERE post_id = ?'
+
+    db.query(sql, [postId], (error, data) => {
+        if (error) return response.json(error)
+        return response.json({ likeCount: data[0]["COUNT(*)"] })
+    })
+})
+
+app.post('/posts/:id/liked', (request, response) => {
+    const postId = request.params.id;
+    const userId = request.body.userId;
+
+    const sql = 'SELECT * FROM post_likes WHERE post_id = ? AND user_id = ?';
+
+    db.query(sql, [postId, userId], (error, data) => {
+        if (error) return response.json(error);
+        return response.json({ isLiked: data.length > 0 });
+    })
+})
