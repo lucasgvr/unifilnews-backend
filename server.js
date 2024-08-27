@@ -278,11 +278,6 @@ app.post('/posts/new', (request, response) => {
     })
 })
 
-
-app.listen(8000, () => {
-    console.log('Server running...')
-})
-
 app.post('/posts/:id/like/new', (request, response) => {
     const postId = request.params.id;
     const userId = request.body.userId;
@@ -313,7 +308,6 @@ app.post('/posts/:id/like/new', (request, response) => {
     })
 })
 
-
 app.get('/posts/:id/likes', (request, response) => {
     const postId = request.params.id;
 
@@ -335,4 +329,8 @@ app.post('/posts/:id/liked', (request, response) => {
         if (error) return response.json(error);
         return response.json({ isLiked: data.length > 0 });
     })
+})
+
+app.listen(8000, () => {
+    console.log('Server running...')
 })
