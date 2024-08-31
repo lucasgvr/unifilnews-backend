@@ -257,7 +257,25 @@ app.get('/posts', (request, response) => {
         if(data.length > 0) {
             response.send({ posts: data })
         } else {
-            response.status(400).send({ error: 'User not found' })
+            response.status(400).send({ error: 'Post not found' })
+        }
+    })
+})
+
+app.get('/posts/:id', (request, response) => {
+    const postId = request.params.id;
+
+    const sql = 'SELECT * FROM posts WHERE id = ?'
+
+    db.query(sql, [postId], (error, data) => {
+        if(error) {
+            return response.status(500).send(error)
+        }
+
+        if(data.length > 0) {
+            response.send({ post: data })
+        } else {
+            response.status(400).send({ error: 'Post not found' })
         }
     })
 })
@@ -330,6 +348,134 @@ app.post('/posts/:id/liked', (request, response) => {
         return response.json({ isLiked: data.length > 0 });
     })
 })
+
+app.post('/posts/:id/delete', (request, response) => {
+    const postId = request.params.id;
+    const deleteLikesSql = 'DELETE FROM post_likes WHERE post_id = ?';
+    
+    db.query(deleteLikesSql, [postId], (error, results) => {
+        if (error) return response.json(error);
+
+        const deleteCommentsSql = 'DELETE FROM posts_comments WHERE postId = ?';
+
+        db.query(deleteCommentsSql, [postId], (error, results) => {
+            if (error) return response.json(error);
+            
+            const deletePostSql = 'DELETE FROM posts WHERE id = ?';
+        
+            db.query(deletePostSql, [postId], (error, results) => {
+                if (error) return response.json(error);
+
+                if (results.affectedRows === 0) {
+                    return response.status(404).json({ error: 'Post not found' });
+                }
+
+                return response.status(200).json({ message: 'Post deleted successfully' });
+            });
+        })
+    });
+})
+
+app.post('/posts/:id/update', (request, response) => {
+    const postId = request.params.id;
+    const { postContent, createdAt } = request.body;
+
+    const sql = 'UPDATE posts SET postContent = ?, createdAt = ? WHERE id = ?';
+
+    db.query(sql, [postContent, createdAt, postId], (error, results) => {
+        if (error) return response.json(error);
+
+        if (results.affectedRows === 0) {
+            return response.status(404).json({ error: 'Post not found' });
+        }
+
+        return response.status(200).json({ message: 'Post updated successfully' });
+    });
+});
+
+app.get('/comments/:id', (request, response) => {
+    const postId = request.params.id;
+
+    const sql = 'SELECT * FROM posts_comments WHERE postId = ?'
+
+    db.query(sql, [postId], (error, data) => {
+        if(error) {
+            return response.status(500).send(error)
+        }
+
+        if(data.length > 0) {
+            response.send({ comments: data })
+        } else {
+            response.status(400).send({ error: 'Post not found' })
+        }
+    })
+})
+
+app.post('/comments/:id/new', (request, response) => {
+    const sql = 'INSERT INTO posts_comments (`userId`, `postId`, `commentContent`, `createdAt`) VALUES (?)'
+
+    const values = [
+        request.body.userId,
+        request.params.id,
+        request.body.commentContent,
+        request.body.createdAt
+    ]
+
+    db.query(sql, [values], (error, data) => {
+        if (error) return response.json(error)
+        return response.json(data)
+    })
+})
+
+app.post('/comment/:id/delete', (request, response) => {
+    const commentId = request.params.id;
+    const deleteCommentSql = 'DELETE FROM posts_comments WHERE id = ?';
+
+    db.query(deleteCommentSql, [commentId], (error, results) => {
+        if (error) return response.json(error);
+
+        if (results.affectedRows === 0) {
+            return response.status(404).json({ error: 'Comment not found' });
+        }
+
+        return response.status(200).json({ message: 'Comment deleted successfully' });
+    });
+});
+
+app.get('/comment/:id', (request, response) => {
+    const commentId = request.params.id;
+
+    const sql = 'SELECT * FROM posts_comments WHERE id = ?'
+
+    db.query(sql, [commentId], (error, data) => {
+        if(error) {
+            return response.status(500).send(error)
+        }
+
+        if(data.length > 0) {
+            response.send({ comment: data })
+        } else {
+            response.status(400).send({ error: 'Post not found' })
+        }
+    })
+})
+
+app.post('/comment/:id/update', (request, response) => {
+    const commentId = request.params.id;
+    const { commentContent, createdAt } = request.body;
+
+    const sql = 'UPDATE posts_comments SET commentContent = ?, createdAt = ? WHERE id = ?';
+
+    db.query(sql, [commentContent, createdAt, commentId], (error, results) => {
+        if (error) return response.json(error);
+
+        if (results.affectedRows === 0) {
+            return response.status(404).json({ error: 'Comment not found' });
+        }
+
+        return response.status(200).json({ message: 'Comment updated successfully' });
+    });
+});
 
 app.listen(8000, () => {
     console.log('Server running...')

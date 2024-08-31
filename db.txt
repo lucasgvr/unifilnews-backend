@@ -15,5 +15,22 @@ CREATE TABLE `posts` (
  `id` int(11) NOT NULL AUTO_INCREMENT,
  `userId` int(11) NOT NULL,
  `postContent` varchar(1000) NOT NULL,
+ `createdAt` varchar(1000) NOT NULL,
  PRIMARY KEY (`id`)
-) ENGINE=InnoDB AUTO_INCREMENT=15 DEFAULT CHARSET=utf8mb4
+) ENGINE=InnoDB AUTO_INCREMENT=27 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci
+
+CREATE TABLE `post_likes` (
+ `id` int(11) NOT NULL AUTO_INCREMENT,
+ `post_id` int(11) NOT NULL,
+ `user_id` int(11) NOT NULL,
+ PRIMARY KEY (`id`)
+) ENGINE=InnoDB AUTO_INCREMENT=30 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci
+
+CREATE TABLE `posts_comments` (
+ `id` int(11) NOT NULL AUTO_INCREMENT,
+ `userId` int(11) NOT NULL,
+ `postId` int(11) NOT NULL,
+ `commentContent` varchar(1000) NOT NULL,
+ `createdAt` varchar(1000) NOT NULL,
+ PRIMARY KEY (`id`)
+) ENGINE=InnoDB AUTO_INCREMENT=27 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci
