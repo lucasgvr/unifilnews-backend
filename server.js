@@ -167,8 +167,13 @@ app.post('/upload', upload.single('image'), async (request, response) => {
 
     let sql
     let values
+    let hashedPassword
 
-    const hashedPassword = await bcrypt.hash(request.body.password, 10);
+    if(request.body.newPassword === 'true') {
+        hashedPassword = await bcrypt.hash(request.body.password, 10);
+    } else {
+        hashedPassword = request.body.password
+    }
 
     if(newImage) {
         sql = 'UPDATE user SET firstName = ?, lastName = ?, email = ?, password = ?, cpf = ?, phone = ?, image = ? WHERE id = ?'
